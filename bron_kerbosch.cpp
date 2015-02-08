@@ -1,8 +1,8 @@
 // bron_kerbosch.cpp
 //
-// A very fast implementation of the basic version of the Bron-Kerbosch 
+// A fast implementation of the basic version of the Bron-Kerbosch 
 // algorithm for listing all maximal cliques (no pivoting, no ordering). 
-// Includes a very compact and cache efficient representation for graph 
+// Includes a compact and cache efficient representation for graph 
 // on at most 64 vertices. 
 
 #include <iostream>
@@ -63,33 +63,31 @@ bool is_adjacent(const graph& g, int u, int v)
 	return g.adj_[u] & (1 << v);
 }
 
-void bron_kerbosch_recursive(const graph& g, index_t r, index_t p, index_t x, std::vector<index_t>& cliques)
+template <typename OutputIterator>
+void bron_kerbosch_recursive(const graph& g, index_t r, index_t p, index_t x, OutputIterator out)
 {
 	if (p == 0 && x == 0)
 	{
-		cliques.emplace_back(r);
+		*out = r;
 	}
 
 	for (unsigned long v; p != 0; p &= ~(1 << v))
 	{
 		_BitScanForward64(&v, p);
 
-		bron_kerbosch_recursive(g, r | (1 << v), p & g.adj_[v], x & g.adj_[v], cliques);
+		bron_kerbosch_recursive(g, r | (1 << v), p & g.adj_[v], x & g.adj_[v], out);
 		p &= ~(1 << v);
 		x |= (1 << v);
 	}
 }
 
-std::vector<index_t> bron_kerbosch(const graph& g)
+template <typename OutputIterator>
+void bron_kerbosch(const graph& g, OutputIterator out)
 {
-	index_t r = 0;
-	index_t p = (std::numeric_limits<index_t>::max() >> 
+	const index_t p = (std::numeric_limits<index_t>::max() >>
 		(std::numeric_limits<index_t>::digits - g.num_vertices()));
-	index_t x = 0;
 
-	std::vector<index_t> c;
-	bron_kerbosch_recursive(g, r, p, x, c);
-	return c;
+	bron_kerbosch_recursive(g, 0, p, 0, out);
 }
 
 int main()
@@ -109,7 +107,9 @@ int main()
 		std::cout << i << ", = " << std::bitset<8>(g.adj_[i]).to_string() << "\n";
 	}
 
-	auto result = bron_kerbosch(g);
-	for (auto e : result)
+	std::vector<index_t> cliques;
+	bron_kerbosch(g, std::back_inserter(cliques));
+
+	for (auto e : cliques)
 		std::cout << std::bitset<8>(e).to_string() << "\n";
 }
