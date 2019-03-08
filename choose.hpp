@@ -6,6 +6,9 @@
 //
 //   Vitter, Jeffrey S. "Random sampling with a reservoir." 
 //   ACM Transactions on Mathematical Software (TOMS) 11.1 (1985): 37-57.
+//
+// Usage example:
+// auto it = choose_if(v.cbegin(), v.cend(), [](int v) { return v % 2 == 0; }, std::mt19937{ std::random_device{}() });
 
 #ifndef CHOOSE_HPP
 #define CHOOSE_HPP
@@ -13,37 +16,29 @@
 #include <iterator>
 #include <random>
 
-template <typename Iterator, typename RandomNumberGenerator>
-Iterator choose(Iterator begin, Iterator end, RandomNumberGenerator& rng)
+template <typename InputIterator, typename UnaryPredicate, typename URBG>
+std::pair<InputIterator, std::size_t> 
+choose_if(InputIterator begin, InputIterator end, UnaryPredicate p, URBG&& g)
 {
-	Iterator result = begin;
-	std::advance(result, rng());
-	return result;
-}
-
-template <typename Iterator, typename UnaryPredicate>
-Iterator choose_if(Iterator begin, Iterator end, UnaryPredicate p)
-{
-	std::random_device rd;
-	std::mt19937 gen(rd());
 	std::bernoulli_distribution sampler;
+	using param_type = std::bernoulli_distribution::param_type;
 
 	std::size_t count = 0;
-	Iterator choice = end;
+	InputIterator choice = end;
 
-	for (Iterator it = begin; it != end; ++it)
+	for (; begin != end; ++begin)
 	{
-		if (p(*it))
+		if (p(*begin))
 		{
 			++count;
-			sampler.param(1.0 / count);
+			sampler.param(static_cast<param_type>(1.0 / count));
 
-			if (sampler(gen))
-				choice = it;
+			if (sampler(g))
+				choice = begin;
 		}
 	}
 
-	return choice;
+	return std::make_pair(choice, count);
 }
 
 #endif
