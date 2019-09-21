@@ -32,21 +32,21 @@ void multi_apply_permutation(std::vector<std::size_t>& perm, Ts&... vecs)
 	for (std::size_t i = 0; i < size; ++i) 
 	{
 		std::size_t current = i;
-		auto ind_begin = perm.begin();
+		auto permIt = perm.begin();
 
-		while (i != ind_begin[current]) 
+		while (i != permIt[current])
 		{
-			const std::size_t next = ind_begin[current];
+			const std::size_t next = permIt[current];
 
 			// TODO: with C++17, we can simplify this to
 			// ((void) std::swap(vecs[current], vecs[next]), ...);
 			(void)std::initializer_list<int>{
 				((void)std::swap(vecs[current], vecs[next]), 0)...};
 			
-			ind_begin[current] = current;
+			permIt[current] = current;
 			current = next;
 		}
-		ind_begin[current] = current;
+		permIt[current] = current;
 	}
 }
 
