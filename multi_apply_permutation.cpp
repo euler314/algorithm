@@ -13,54 +13,49 @@
 #include <algorithm>
 #include <cassert>
 
-#include <boost/algorithm/apply_permutation.hpp>
-
-namespace detail 
+namespace detail
 {
-	template <typename T, typename... Ts>
-	std::size_t size_helper(const T& first, const Ts&...)
-	{
-		return first.size();
-	}
+    template <typename T, typename... Ts>
+    std::size_t size_helper(const T& first, const Ts&...)
+    {
+        return first.size();
+    }
 }
 
 template <typename... Ts>
-void multi_apply_permutation(std::vector<std::size_t>& perm, Ts&... vecs)
+void multi_apply_permutation(std::vector<std::size_t>& perm, Ts&... ranges)
 {
-	const std::size_t size = detail::size_helper(vecs...);
+    const std::size_t size = detail::size_helper(ranges...);
 
-	for (std::size_t i = 0; i < size; ++i) 
-	{
-		std::size_t current = i;
-		auto permIt = perm.begin();
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        std::size_t current = i;
+        auto permIt = perm.begin();
 
-		while (i != permIt[current])
-		{
-			const std::size_t next = permIt[current];
+        while (i != permIt[current])
+        {
+            const std::size_t next = permIt[current];
 
-			// TODO: with C++17, we can simplify this to
-			// ((void) std::swap(vecs[current], vecs[next]), ...);
-			(void)std::initializer_list<int>{
-				((void)std::swap(vecs[current], vecs[next]), 0)...};
-			
-			permIt[current] = current;
-			current = next;
-		}
-		permIt[current] = current;
-	}
+            ((void)std::swap(ranges[current], ranges[next]), ...);
+
+            permIt[current] = current;
+            current = next;
+        }
+        permIt[current] = current;
+    }
 }
 
 int main()
 {
-	std::vector<int> a{ 1,2,3,4,5,6 };
-	std::vector<int> b{ 1,2,3,4,5,6 };
-	std::vector<int> c{ 6,5,4,3,2,1 };
+    std::vector<int> a{ 1,2,3,4,5,6 };
+    std::vector<int> b{ 1,2,3,4,5,6 };
+    std::vector<int> c{ 6,5,4,3,2,1 };
 
-	std::vector<std::size_t> perm{ 5,4,3,2,1,0 };
+    std::vector<std::size_t> perm{ 5,4,3,2,1,0 };
 
-	multi_apply_permutation(perm, a, b, c);
+    multi_apply_permutation(perm, a, b, c);
 
-	for (auto e : a) std::cout << e << " "; std::cout << "\n";	
-	for (auto e : b) std::cout << e << " "; std::cout << "\n";
-	for (auto e : c) std::cout << e << " "; std::cout << "\n";
+    for (auto e : a) std::cout << e << " "; std::cout << "\n";
+    for (auto e : b) std::cout << e << " "; std::cout << "\n";
+    for (auto e : c) std::cout << e << " "; std::cout << "\n";
 }
